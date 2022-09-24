@@ -61,12 +61,16 @@ bool mm_test() {
   std::vector<T> b = {1, 2, 3, 5, 4, 6, 3, 12, 9};
   std::vector<T> c(M * N);
 
-  matmul_cpu_v1::mmmul(M, N, K, a.data(), b.data(), c.data());
+#define do_test(target)                                     \
+  target::mmmul(M, N, K, a.data(), b.data(), c.data());     \
+  if (!::is_same(M * N, c.data(), b.data())) TEST_FAILED(); \
+  target::mmmul(M, N, K, b.data(), a.data(), c.data());     \
   if (!::is_same(M * N, c.data(), b.data())) TEST_FAILED();
 
-  matmul_cpu_v1::mmmul(M, N, K, b.data(), a.data(), c.data());
-  if (!::is_same(M * N, c.data(), b.data())) TEST_FAILED();
-
+  do_test(matmul_cpu_v1);
+  do_test(matmul_cpu_v2);
+  do_test(matmul_cpu_v3);
+#undef do_test
   TEST_PASSED();
 }
 
@@ -79,8 +83,14 @@ bool mv_test() {
   std::vector<T> b = {1, 2, 3, 0};
   std::vector<T> c(M);
 
-  matmul_cpu_v1::mvmul(M, K, a.data(), b.data(), c.data());
+#define do_test(target)                              \
+  target::mvmul(M, K, a.data(), b.data(), c.data()); \
   if (!::is_same(M, c.data(), b.data())) TEST_FAILED();
+
+  do_test(matmul_cpu_v1);
+  do_test(matmul_cpu_v2);
+  do_test(matmul_cpu_v3);
+#undef do_test
 
   TEST_PASSED();
 }
