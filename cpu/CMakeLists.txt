@@ -1,0 +1,16 @@
+add_executable(test_cpu
+    test.cpp
+)
+
+add_executable(profile_cpu
+    profile.cpp
+)
+
+add_library(cpu_lib STATIC
+    matmul.hpp
+    matmul.cpp
+)
+
+enable_testing()
+
+add_test(NAME test_cpu COMMAND test_cpu)
