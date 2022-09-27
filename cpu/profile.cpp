@@ -69,6 +69,8 @@ int main() {
   timeit(mmmul_profile<long>(N, N, N, target::mmmul<long>))
 #define do_float(target) \
   timeit(mmmul_profile<float>(N, N, N, target::mmmul<float>))
+#define do_double(target) \
+  timeit(mmmul_profile<double>(N, N, N, target::mmmul<double>))
 
     std::cout << "--- mmmul( Square matrix ) N=" << N << std::endl;
 
@@ -92,10 +94,15 @@ int main() {
     do_float(matmul_cpu_v3);
     do_float(matmul_cpu_v4);
 
+    do_double(matmul_cpu_v1);
+    do_double(matmul_cpu_v2);
+    do_double(matmul_cpu_v3);
+    do_double(matmul_cpu_v4);
 #undef do_short
 #undef do_int
 #undef do_long
 #undef do_float
+#undef do_double
   }
   {
     const usize N = 1024;
@@ -105,6 +112,8 @@ int main() {
 #define do_long(target) timeit(mvmul_profile<long>(N, N, target::mvmul<long>))
 #define do_float(target) \
   timeit(mvmul_profile<float>(N, N, target::mvmul<float>))
+#define do_double(target) \
+  timeit(mvmul_profile<double>(N, N, target::mvmul<double>))
 
     std::cout << "--- mvmul( Square matrix ) N=" << N << std::endl;
 
@@ -127,6 +136,11 @@ int main() {
     do_float(matmul_cpu_v2);
     do_float(matmul_cpu_v3);
     do_float(matmul_cpu_v4);
+
+    do_double(matmul_cpu_v1);
+    do_double(matmul_cpu_v2);
+    do_double(matmul_cpu_v3);
+    do_double(matmul_cpu_v4);
 #undef do_short
 #undef do_int
 #undef do_long
