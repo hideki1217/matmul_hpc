@@ -14,7 +14,3 @@ add_library(cpu_lib STATIC
     matmul.hpp
     matmul.cpp
 )
-
-enable_testing()
-
-add_test(NAME test_cpu COMMAND test_cpu)

@@ -50,9 +50,9 @@ void mvmul(usize M, usize K, const T *a, const T *b, T *c) {
   for (int i = 0; i < M; i++) {
     int k;
     T reg(0);
-    const T *a_row = a + i * K;
+    const T *a_row = a + (i * K);
 
-    for (k = 0; k < K - 4; k += 4) {
+    for (k = 0; k <= K - 4; k += 4) {
       T reg0 = a_row[k] * b[k];
       T reg1 = a_row[k + 1] * b[k + 1];
       T reg2 = a_row[k + 2] * b[k + 2];
@@ -97,7 +97,7 @@ void mmmul(usize M, usize N, usize K, const T *a, const T *b, T *c) {
       int j;
       const T a_ik = a[i * K + k];
 
-      for (j = 0; j < N - 4; j += 4) {
+      for (j = 0; j <= N - 4; j += 4) {
         c[i * N + j] += a_ik * b[k * N + j];
         c[i * N + j + 1] += a_ik * b[k * N + j + 1];
         c[i * N + j + 2] += a_ik * b[k * N + j + 2];
@@ -128,7 +128,7 @@ void mvmul(usize M, usize K, const T *a, const T *b, T *c) {
     T reg(0);
     const T *a_row = a + i * K;
 
-    for (k = 0; k < K - 4; k += 4) {
+    for (k = 0; k <= K - 4; k += 4) {
       T vreg[4];
 
       vreg[0] = a_row[k] * b[k];
@@ -181,6 +181,8 @@ inline static constexpr T div_up(T a, T b) {
 template <usize sM, usize sN = sM, usize sK = sM, typename T>
 void mmmul_by_submatrix(usize M, usize N, usize K, const T *a, const T *b,
                         T *c) {
+  std::memset(c, 0, sizeof(T) * M * N);
+
   T A[sM][sK];
   T B_T[sN][sK];
 
@@ -215,7 +217,7 @@ void mmmul_by_submatrix(usize M, usize N, usize K, const T *a, const T *b,
               for (int k = 0; k < k_sup; k++) {
                 reg += A[i][k] * B_T[j][k];
               }
-              c[c_0 + (i * N + j)] = reg;
+              c[c_0 + (i * N + j)] += reg;
             }
           }
         }
@@ -239,7 +241,6 @@ mmull_define(int16_t, 32, 32, 32);
 mmull_define(int32_t, 16, 16, 16);
 mmull_define(int64_t, 16, 16, 16);
 mmull_define(float, 16, 16, 16);
-mmull_define(double, 16, 16, 16);
 
 template <typename T>
 void mvmul(usize M, usize K, const T *a, const T *b, T *c) {
