@@ -74,17 +74,20 @@ int main() {
     do_short(matmul_cpu_v2);
     do_short(matmul_cpu_v3);
     do_short(matmul_cpu_v4);
+    do_short(matmul_cpu_v5);
 
     do_int(matmul_cpu_v1);
     do_int(matmul_cpu_v2);
     do_int(matmul_cpu_v3);
     do_int(matmul_cpu_v4);
+    do_int(matmul_cpu_v5);
 
 
     do_float(matmul_cpu_v1);
     do_float(matmul_cpu_v2);
     do_float(matmul_cpu_v3);
     do_float(matmul_cpu_v4);
+    do_float(matmul_cpu_v5);
 
 #undef do_short
 #undef do_int
@@ -104,18 +107,21 @@ int main() {
     do_short(matmul_cpu_v2);
     do_short(matmul_cpu_v3);
     do_short(matmul_cpu_v4);
+    do_short(matmul_cpu_v5);
 
     do_int(matmul_cpu_v1);
     do_int(matmul_cpu_v2);
     do_int(matmul_cpu_v3);
     do_int(matmul_cpu_v4);
+    do_int(matmul_cpu_v5);
 
 
     do_float(matmul_cpu_v1);
     do_float(matmul_cpu_v2);
     do_float(matmul_cpu_v3);
     do_float(matmul_cpu_v4);
-
+    do_float(matmul_cpu_v5);
+    
 #undef do_short
 #undef do_int
 #undef do_float

@@ -142,6 +142,7 @@ bool mv_test() {
   do_test(matmul_cpu_v2);
   do_test(matmul_cpu_v3);
   do_test(matmul_cpu_v4);
+  do_test(matmul_cpu_v5);
 
 #undef do_test
 
