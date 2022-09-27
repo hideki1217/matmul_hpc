@@ -70,6 +70,7 @@ bool mm_test() {
   do_test(matmul_cpu_v1);
   do_test(matmul_cpu_v2);
   do_test(matmul_cpu_v3);
+  do_test(matmul_cpu_v4);
 #undef do_test
   TEST_PASSED();
 }
@@ -90,6 +91,8 @@ bool mv_test() {
   do_test(matmul_cpu_v1);
   do_test(matmul_cpu_v2);
   do_test(matmul_cpu_v3);
+  do_test(matmul_cpu_v4);
+
 #undef do_test
 
   TEST_PASSED();

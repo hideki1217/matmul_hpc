@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstring>
 
 #include "matmul_core.h"
@@ -46,38 +47,41 @@ void mmmul(usize M, usize N, usize K, const T *a, const T *b, T *c) {
 
 template <typename T>
 void mvmul(usize M, usize K, const T *a, const T *b, T *c) {
-  std::memset(c, 0, sizeof(T) * M);
-
   for (int i = 0; i < M; i++) {
     int k;
-    for (k = 0; k < K - 4; k += 4) {
-      T reg0 = a[i * K + k] * b[k];
-      T reg1 = a[i * K + k + 1] * b[k + 1];
-      T reg2 = a[i * K + k + 2] * b[k + 2];
-      T reg3 = a[i * K + k + 3] * b[k + 3];
+    T reg(0);
+    const T *a_row = a + i * K;
 
-      c[i] += reg0 + reg1 + reg2 + reg3;
+    for (k = 0; k < K - 4; k += 4) {
+      T reg0 = a_row[k] * b[k];
+      T reg1 = a_row[k + 1] * b[k + 1];
+      T reg2 = a_row[k + 2] * b[k + 2];
+      T reg3 = a_row[k + 3] * b[k + 3];
+
+      reg += reg0 + reg1 + reg2 + reg3;
     }
     switch (K - k) {
       case 3: {
-        T reg0 = a[i * K + k + 2] * b[k + 2];
-        T reg1 = a[i * K + k + 1] * b[k + 1];
-        T reg2 = a[i * K + k] * b[k];
+        T reg0 = a_row[k + 2] * b[k + 2];
+        T reg1 = a_row[k + 1] * b[k + 1];
+        T reg2 = a_row[k] * b[k];
 
-        c[i] += reg0 + reg1 + reg2;
+        reg += reg0 + reg1 + reg2;
         break;
       }
       case 2: {
-        T reg0 = a[i * K + k + 1] * b[k + 1];
-        T reg1 = a[i * K + k] * b[k];
+        T reg0 = a_row[k + 1] * b[k + 1];
+        T reg1 = a_row[k] * b[k];
 
-        c[i] += reg0 + reg1;
+        reg += reg0 + reg1;
         break;
       }
       case 1:
-        c[i] += a[i * K + k] * b[k];
+        reg += a_row[k] * b[k];
         break;
     }
+
+    c[i] = reg;
   }
 }
 }  // namespace matmul_cpu_v2
@@ -119,41 +123,134 @@ void mmmul(usize M, usize N, usize K, const T *a, const T *b, T *c) {
 }
 template <typename T>
 void mvmul(usize M, usize K, const T *a, const T *b, T *c) {
-  std::memset(c, 0, sizeof(T) * M);
-
   for (int i = 0; i < M; i++) {
     int k;
+    T reg(0);
+    const T *a_row = a + i * K;
 
     for (k = 0; k < K - 4; k += 4) {
       T vreg[4];
 
-      vreg[0] = a[i * K + k] * b[k];
-      vreg[1] = a[i * K + k + 1] * b[k + 1];
-      vreg[2] = a[i * K + k + 2] * b[k + 2];
-      vreg[3] = a[i * K + k + 3] * b[k + 3];
+      vreg[0] = a_row[k] * b[k];
+      vreg[1] = a_row[k + 1] * b[k + 1];
+      vreg[2] = a_row[k + 2] * b[k + 2];
+      vreg[3] = a_row[k + 3] * b[k + 3];
 
-      c[i] += vreg[0] + vreg[1] + vreg[2] + vreg[3];
+      reg += vreg[0] + vreg[1] + vreg[2] + vreg[3];
     }
     switch (K - k) {
       case 3: {
-        T reg0 = a[i * K + k + 2] * b[k + 2];
-        T reg1 = a[i * K + k + 1] * b[k + 1];
-        T reg2 = a[i * K + k] * b[k];
+        T reg0 = a_row[k + 2] * b[k + 2];
+        T reg1 = a_row[k + 1] * b[k + 1];
+        T reg2 = a_row[k] * b[k];
 
-        c[i] += reg0 + reg1 + reg2;
+        reg += reg0 + reg1 + reg2;
         break;
       }
       case 2: {
-        T reg0 = a[i * K + k + 1] * b[k + 1];
-        T reg1 = a[i * K + k] * b[k];
+        T reg0 = a_row[k + 1] * b[k + 1];
+        T reg1 = a_row[k] * b[k];
 
-        c[i] += reg0 + reg1;
+        reg += reg0 + reg1;
         break;
       }
       case 1:
-        c[i] += a[i * K + k] * b[k];
+        reg += a_row[k] * b[k];
         break;
     }
+    c[i] = reg;
   }
 }
 }  // namespace matmul_cpu_v3
+
+namespace matmul_cpu_v4 {
+
+template <typename T>
+inline static constexpr T div_up(T a, T b) {
+  return (a + b - 1) / b;
+}
+
+/**
+ * @brief mmmul by submatrix multiply
+ * This method has an advantage on cache efficincy
+ *
+ * @tparam sM A's submatrix row_n
+ * @tparam sN A's submatrix col_n and B's submatrix row_n
+ * @tparam sK B's submatrix row_n
+ */
+template <usize sM, usize sN = sM, usize sK = sM, typename T>
+void mmmul_by_submatrix(usize M, usize N, usize K, const T *a, const T *b,
+                        T *c) {
+  T A[sM][sK];
+  T B_T[sN][sK];
+
+  const int b_i_sup = div_up(M, sM);
+  const int b_j_sup = div_up(N, sN);
+  const int b_k_sup = div_up(K, sK);
+  for (int b_i = 0; b_i < b_i_sup; b_i++) {
+    for (int b_j = 0; b_j < b_j_sup; b_j++) {
+      for (int b_k = 0; b_k < b_k_sup; b_k++) {
+        const int c_0 = b_i * N * sM + b_j * sN;
+        const int a_0 = b_i * K * sM + b_k * sK;
+        const int b_0 = b_k * N * sK + b_j * sN;
+
+        const int i_sup = std::min(sM, M - b_i * sM);
+        const int k_sup = std::min(sK, K - b_k * sK);
+        const int j_sup = std::min(sN, N - b_j * sN);
+
+        for (int i = 0; i < i_sup; i++) {
+          for (int k = 0; k < k_sup; k++) {
+            A[i][k] = a[a_0 + (i * K + k)];
+          }
+        }
+        for (int k = 0; k < k_sup; k++) {
+          for (int j = 0; j < j_sup; j++) {
+            B_T[j][k] = b[b_0 + (k * N + j)];
+          }
+        }
+        {
+          for (int i = 0; i < i_sup; i++) {
+            for (int j = 0; j < j_sup; j++) {
+              T reg(0);
+              for (int k = 0; k < k_sup; k++) {
+                reg += A[i][k] * B_T[j][k];
+              }
+              c[c_0 + (i * N + j)] = reg;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+void mmmul(usize M, usize N, usize K, const T *a, const T *b, T *c) {
+  mmmul_by_submatrix<16>(M, N, K, a, b, c);
+}
+
+#define mmull_define(T_, sM_, sN_, sK_)                                        \
+  template <>                                                                  \
+  void mmmul<T_>(usize M, usize N, usize K, const T_ *a, const T_ *b, T_ *c) { \
+    mmmul_by_submatrix<sM_, sN_, sK_>(M, N, K, a, b, c);                       \
+  }
+
+mmull_define(int16_t, 32, 32, 32);
+mmull_define(int32_t, 16, 16, 16);
+mmull_define(int64_t, 16, 16, 16);
+mmull_define(float, 16, 16, 16);
+mmull_define(double, 16, 16, 16);
+
+template <typename T>
+void mvmul(usize M, usize K, const T *a, const T *b, T *c) {
+  for (int i = 0; i < M; i++) {
+    const T *a_row = a + i * K;
+
+    T reg(0);
+    for (int k = 0; k < K; k++) {
+      reg += a_row[k] * b[k];
+    }
+    c[i] = reg;
+  }
+}
+}  // namespace matmul_cpu_v4

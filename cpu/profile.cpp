@@ -62,28 +62,35 @@ int main() {
   // square matrix
   {
     const usize N = 256;
-#define do_short(target) timeit(mmmul_profile<short>(N, N, N, target::mmmul<short>))
+#define do_short(target) \
+  timeit(mmmul_profile<short>(N, N, N, target::mmmul<short>))
 #define do_int(target) timeit(mmmul_profile<int>(N, N, N, target::mmmul<int>))
-#define do_long(target) timeit(mmmul_profile<long>(N, N, N, target::mmmul<long>))
-#define do_float(target) timeit(mmmul_profile<float>(N, N, N, target::mmmul<float>))
+#define do_long(target) \
+  timeit(mmmul_profile<long>(N, N, N, target::mmmul<long>))
+#define do_float(target) \
+  timeit(mmmul_profile<float>(N, N, N, target::mmmul<float>))
 
     std::cout << "--- mmmul( Square matrix ) N=" << N << std::endl;
 
     do_short(matmul_cpu_v1);
     do_short(matmul_cpu_v2);
     do_short(matmul_cpu_v3);
+    do_short(matmul_cpu_v4);
 
     do_int(matmul_cpu_v1);
     do_int(matmul_cpu_v2);
     do_int(matmul_cpu_v3);
+    do_int(matmul_cpu_v4);
 
     do_long(matmul_cpu_v1);
     do_long(matmul_cpu_v2);
     do_long(matmul_cpu_v3);
+    do_long(matmul_cpu_v4);
 
     do_float(matmul_cpu_v1);
     do_float(matmul_cpu_v2);
     do_float(matmul_cpu_v3);
+    do_float(matmul_cpu_v4);
 
 #undef do_short
 #undef do_int
@@ -92,28 +99,34 @@ int main() {
   }
   {
     const usize N = 1024;
-#define do_short(target) timeit(mvmul_profile<short>(N, N, target::mvmul<short>))
+#define do_short(target) \
+  timeit(mvmul_profile<short>(N, N, target::mvmul<short>))
 #define do_int(target) timeit(mvmul_profile<int>(N, N, target::mvmul<int>))
 #define do_long(target) timeit(mvmul_profile<long>(N, N, target::mvmul<long>))
-#define do_float(target) timeit(mvmul_profile<float>(N, N, target::mvmul<float>))
+#define do_float(target) \
+  timeit(mvmul_profile<float>(N, N, target::mvmul<float>))
 
     std::cout << "--- mvmul( Square matrix ) N=" << N << std::endl;
 
     do_short(matmul_cpu_v1);
     do_short(matmul_cpu_v2);
     do_short(matmul_cpu_v3);
+    do_short(matmul_cpu_v4);
 
     do_int(matmul_cpu_v1);
     do_int(matmul_cpu_v2);
     do_int(matmul_cpu_v3);
+    do_int(matmul_cpu_v4);
 
     do_long(matmul_cpu_v1);
     do_long(matmul_cpu_v2);
     do_long(matmul_cpu_v3);
+    do_long(matmul_cpu_v4);
 
     do_float(matmul_cpu_v1);
     do_float(matmul_cpu_v2);
     do_float(matmul_cpu_v3);
+    do_float(matmul_cpu_v4);
 #undef do_short
 #undef do_int
 #undef do_long
