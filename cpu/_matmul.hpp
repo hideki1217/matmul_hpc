@@ -3,6 +3,12 @@
 
 #include "matmul_core.h"
 
+#define to_str(x_) #x_
+#define asm_log(message) asm volatile ("#" asm_log_NAME ": " #message)
+#define asm_log_start() asm_log(start)
+#define asm_log_end() asm_log(end)
+
+
 namespace matmul_cpu_v1 {
 
 template <typename T>

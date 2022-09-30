@@ -5,6 +5,7 @@ add_executable(test_cpu
 add_executable(profile_cpu
     profile.cpp
 )
+set_target_properties(profile_cpu PROPERTIES COMPILE_FLAGS "-save-temps") 
 
 # add_executable(search_cpu
 #     search.cpp
