@@ -6,7 +6,4 @@ include_directories(include)
 
 add_subdirectory(cpu)
 
-
-
-
-
+enable_testing()
