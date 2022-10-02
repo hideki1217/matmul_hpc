@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 
 #include "matmul_core.h"

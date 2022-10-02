@@ -1,3 +1,5 @@
+#pragma once
+
 using usize = unsigned int;
 
 template <typename T>
