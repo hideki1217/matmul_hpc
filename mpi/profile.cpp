@@ -36,12 +36,12 @@ time_ms_t mmmul_profile(const usize M, const usize N, const usize K, F f) {
 #define timeit(exp)                          \
   {                                          \
     time_ms_t time = (exp);                  \
-    print_once("%ld(ms): %s\n", time, #exp); \
+    printf_once("%ld(ms): %s\n", time, #exp); \
   }
 
 int main(int argc, char** argv) {
-  MPI_Init(&argc, &argv);
-  my_mpi::init();
+  my_mpi::MPI_Core core(&argc, &argv);
+  core.get_ready();
   {
     const usize N = 256;
 
@@ -51,17 +51,19 @@ int main(int argc, char** argv) {
 #define do_float(target) \
   timeit(mmmul_profile<float>(N, N, N, target::mmmul<float>))
 
-    print_once("--- mmmul( Square matrix ) N=%d\n", N);
+    printf_once("--- mmmul( Square matrix ) N=%d\n", N);
 
     do_short(matmul_mpi_v1);
+    do_short(matmul_mpi_v2);
 
     do_int(matmul_mpi_v1);
+    do_int(matmul_mpi_v2);
 
     do_float(matmul_mpi_v1);
+    do_float(matmul_mpi_v2);
 
 #undef do_short
 #undef do_int
 #undef do_float
   }
-  MPI_Finalize();
 }

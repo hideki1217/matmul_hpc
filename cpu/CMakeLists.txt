@@ -37,3 +37,5 @@ PROPERTIES
     COMPILE_FLAGS "-DENABLE_AVX"
     COMPILE_FLAGS "-march=native"
 )
+
+add_test(NAME test_cpu COMMAND test_cpu)
