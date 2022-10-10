@@ -1,0 +1,21 @@
+{
+	"name": "C++_MPI_Cuda",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"runArgs": [
+		"--gpus",
+		"all"
+	],
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools",
+				"ms-vscode.cmake-tools"
+			]
+		}
+	},
+
+	// "remoteUser": "vscode",
+}
