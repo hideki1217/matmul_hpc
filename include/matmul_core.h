@@ -1,6 +1,6 @@
 #pragma once
 
-using usize = unsigned int;
+typedef unsigned int usize;
 
 template <typename T>
 using mmmul_t = void(usize M, usize N, usize K, const T *a, const T *b, T *c);
