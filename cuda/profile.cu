@@ -48,12 +48,15 @@ int main() {
 
     do_short(matmul_cuda_v1);
     do_short(matmul_cuda_v2);
+    do_short(matmul_cuda_v3);
 
     do_int(matmul_cuda_v1);
     do_int(matmul_cuda_v2);
+    do_int(matmul_cuda_v3);
 
     do_float(matmul_cuda_v1);
     do_float(matmul_cuda_v2);
+    do_float(matmul_cuda_v3);
 
 #undef do_short
 #undef do_int

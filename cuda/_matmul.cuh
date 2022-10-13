@@ -178,3 +178,77 @@ class MMmull {
   T *c_d;
 };
 }  // namespace matmul_cuda_v2
+
+namespace matmul_cuda_v3 {
+template <typename T, usize BN, usize BK>
+__global__ void mmmull_kernel(const usize M, const usize N, const usize K,
+                              const T *a, const T *b, T *c) {
+  static_assert(BN == BK);
+
+  const int j = threadIdx.x;
+  const int i = threadIdx.y;
+  const int x0 = blockDim.x * blockIdx.x;
+  const int y0 = blockDim.y * blockIdx.y;
+
+  __shared__ T sA[BN][BK];
+  __shared__ T sB[BK][BN];
+
+  T reg(0);
+  for (int bk = 0; bk < div_up(K, BK); bk++) {
+    sA[i][j] = a[(y0 + i) * K + (bk * BK + j)];
+    sB[i][j] = b[(bk * BK + i) * N + (x0 + j)];
+
+    __syncthreads();
+
+    for(int k=0; k<min(BK, K - bk * BK); k++) {
+      reg += sA[i][k] * sB[k][j];
+    }
+
+    __syncthreads();
+  }
+  if (i < M && j < N) c[i * N + j] = reg;
+}
+template <typename T>
+class MMmull {
+ public:
+  MMmull(const usize maxM, const usize maxN, const usize maxK)
+      : max_a_byte(sizeof(T) * maxM * maxK),
+        max_b_byte(sizeof(T) * maxK * maxN),
+        max_c_byte(sizeof(T) * maxM * maxN) {
+    cudaMalloc(&a_d, max_a_byte);
+    cudaMalloc(&b_d, max_b_byte);
+    cudaMalloc(&c_d, max_c_byte);
+    CHECK_LAST_CUDA_ERROR();
+  }
+  ~MMmull() {
+    cudaFree(a_d);
+    cudaFree(b_d);
+    cudaFree(c_d);
+    CHECK_LAST_CUDA_ERROR();
+  }
+  void mmmul(const usize M, const usize N, const usize K, const T *a,
+             const T *b, T *c) {
+    const usize a_byte = M * K * sizeof(T);
+    const usize b_byte = K * N * sizeof(T);
+    const usize c_byte = M * N * sizeof(T);
+
+    cudaMemcpyAsync(a_d, a, a_byte, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(b_d, b, b_byte, cudaMemcpyHostToDevice);
+
+    static constexpr usize BN = 32;
+    dim3 block(BN, BN);
+    dim3 grid(div_up(M, BN), div_up(N, BN));
+    mmmull_kernel<T, BN, BN><<<grid, block>>>(M, N, K, a_d, b_d, c_d);
+
+    cudaMemcpyAsync(c, c_d, c_byte, cudaMemcpyDeviceToHost);
+  }
+  const usize max_a_byte;
+  const usize max_b_byte;
+  const usize max_c_byte;
+
+ private:
+  T *a_d;
+  T *b_d;
+  T *c_d;
+};
+}
