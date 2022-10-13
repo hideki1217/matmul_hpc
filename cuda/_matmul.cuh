@@ -200,7 +200,7 @@ __global__ void mmmull_kernel(const usize M, const usize N, const usize K,
 
     __syncthreads();
 
-    for(int k=0; k<min(BK, K - bk * BK); k++) {
+    for (int k = 0; k < min(BK, K - bk * BK); k++) {
       reg += sA[i][k] * sB[k][j];
     }
 
@@ -237,7 +237,7 @@ class MMmull {
 
     static constexpr usize BN = 32;
     dim3 block(BN, BN);
-    dim3 grid(div_up(M, BN), div_up(N, BN));
+    dim3 grid(div_up(N, BN), div_up(M, BN));
     mmmull_kernel<T, BN, BN><<<grid, block>>>(M, N, K, a_d, b_d, c_d);
 
     cudaMemcpyAsync(c, c_d, c_byte, cudaMemcpyDeviceToHost);
@@ -251,4 +251,89 @@ class MMmull {
   T *b_d;
   T *c_d;
 };
+}  // namespace matmul_cuda_v3
+
+namespace matmul_cuda_v4 {
+template <typename T, usize BN, usize BK, usize RPT>
+__global__ void mmmull_kernel(const usize M, const usize N, const usize K,
+                              const T *a, const T *b, T *c) {
+  static_assert(BN == BK);
+  static_assert(BN % RPT == 0);
+
+  const int j = threadIdx.x;
+  const int i = threadIdx.y;
+  const int x0 = blockDim.x * blockIdx.x;
+  const int y0 = blockDim.y * RPT * blockIdx.y;
+
+  __shared__ T sA[BN][BK];
+  __shared__ T sB[BK][BN];
+
+  T reg[RPT];
+  for(int i=0; i<RPT; i++) reg[i] = 0;
+
+  for (int bk = 0; bk < div_up(K, BK); bk++) {
+    for(int r=0; r<RPT; r++){
+      sA[i * RPT + r][j] = a[(y0 + i * RPT + r) * K + (bk * BK + j)];
+      sB[i * RPT + r][j] = b[(bk * BK + i * RPT + r) * N + (x0 + j)];
+    }
+    __syncthreads();
+
+    for (int k = 0; k < min(BK, K - bk * BK); k++) {
+      for(int r=0; r<RPT; r++){
+        reg[r] += sA[i * RPT + r][k] * sB[k][j];
+      }
+    }
+
+    __syncthreads();
+  }
+
+  for(int r=0; r<RPT; r++){
+    const int i_r = i * RPT + r;
+    if (i_r < M && j < N) c[i_r * N + j] = reg[r];
+  }
 }
+template <typename T>
+class MMmull {
+ public:
+  MMmull(const usize maxM, const usize maxN, const usize maxK)
+      : max_a_byte(sizeof(T) * maxM * maxK),
+        max_b_byte(sizeof(T) * maxK * maxN),
+        max_c_byte(sizeof(T) * maxM * maxN) {
+    cudaMalloc(&a_d, max_a_byte);
+    cudaMalloc(&b_d, max_b_byte);
+    cudaMalloc(&c_d, max_c_byte);
+    CHECK_LAST_CUDA_ERROR();
+  }
+  ~MMmull() {
+    cudaFree(a_d);
+    cudaFree(b_d);
+    cudaFree(c_d);
+    CHECK_LAST_CUDA_ERROR();
+  }
+  void mmmul(const usize M, const usize N, const usize K, const T *a,
+             const T *b, T *c) {
+    const usize a_byte = M * K * sizeof(T);
+    const usize b_byte = K * N * sizeof(T);
+    const usize c_byte = M * N * sizeof(T);
+
+    cudaMemcpyAsync(a_d, a, a_byte, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(b_d, b, b_byte, cudaMemcpyHostToDevice);
+
+    static constexpr usize BN = 32;
+    static constexpr usize RPT = 8;
+    dim3 block(BN, BN/RPT);
+    dim3 grid(div_up(N, BN), div_up(M, BN));
+    mmmull_kernel<T, BN, BN, RPT><<<grid, block>>>(M, N, K, a_d, b_d, c_d);
+
+    cudaMemcpyAsync(c, c_d, c_byte, cudaMemcpyDeviceToHost);
+  }
+  const usize max_a_byte;
+  const usize max_b_byte;
+  const usize max_c_byte;
+
+ private:
+  T *a_d;
+  T *b_d;
+  T *c_d;
+};
+}  // namespace matmul_cuda_v4

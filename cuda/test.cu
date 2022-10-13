@@ -83,6 +83,7 @@ bool mm_test() {
   do_test(matmul_cuda_v1);
   do_test(matmul_cuda_v2);
   do_test(matmul_cuda_v3);
+  do_test(matmul_cuda_v4);
 #undef do_test
   TEST_PASSED();
 }

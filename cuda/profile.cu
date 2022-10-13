@@ -42,21 +42,24 @@ int main() {
   gflopit(mmmul_profile<short>(N, N, N, target::MMmull<int16_t>(N, N, N)))
 #define do_int(target) gflopit(mmmul_profile<int>(N, N, N, target::MMmull<int32_t>(N, N, N)))
 #define do_float(target) \
-  gflopit(mmmul_profile<float>(N, N, N, target::MMmull<float>(N, N, N), 1))
+  gflopit(mmmul_profile<float>(N, N, N, target::MMmull<float>(N, N, N)))
 
     std::cout << "--- mmmul( Square matrix ) N=" << N << std::endl;
 
     do_short(matmul_cuda_v1);
     do_short(matmul_cuda_v2);
     do_short(matmul_cuda_v3);
+    do_short(matmul_cuda_v4);
 
     do_int(matmul_cuda_v1);
     do_int(matmul_cuda_v2);
     do_int(matmul_cuda_v3);
+    do_int(matmul_cuda_v4);
 
     do_float(matmul_cuda_v1);
     do_float(matmul_cuda_v2);
     do_float(matmul_cuda_v3);
+    do_float(matmul_cuda_v4);
 
 #undef do_short
 #undef do_int
